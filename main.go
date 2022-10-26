@@ -11,35 +11,35 @@ type Material struct {
 	material string
 }
 type Mina [20]Material
+
 type MenasEncontradas []Material
 type MenasMinadas []Material
 type Lingotes []Material
 
-func encontrar(mina Mina) (m MenasEncontradas) {
-	for _, v := range mina {
-		if v.tipo == "mena" {
-			fmt.Println("Ojeador: encontre una mena de", v.material)
-			m = append(m, v)
+func encontrar(mina Mina, canalMenasEncontradas chan Material) {
+	for _, material := range mina {
+		if material.tipo == "mena" {
+			fmt.Println("Ojeador: encontre una material de", material.material)
+			canalMenasEncontradas <- material
 		}
 	}
 	return
 }
 
-func minar(menas MenasEncontradas) (m MenasMinadas) {
-	for i, v := range menas {
-		fmt.Println("Minero: miné la mena de la posición", i)
-		m = append(m, v)
+func minar(canalMenasEncontradas chan Material, canalMenasMinadas chan Material) {
+	for {
+		m := <-canalMenasEncontradas
+		fmt.Println("Minero: minando mena de", m.material)
+		canalMenasMinadas <- m
 	}
-	return
 }
 
-func fundir(menas MenasMinadas) (m Lingotes) {
-	for _, v := range menas {
-		fmt.Println("Fundidor: fundiendo mina de ", v.material)
-		v.tipo = "lingote"
-		m = append(m, v)
+func fundir(canalMenasMinadas chan Material) {
+	for {
+		m := <-canalMenasMinadas
+		fmt.Println("Fundidor: fundiendo mina de ", m.material)
+		m.tipo = "lingote"
 	}
-	return
 }
 
 func (m *Mina) init() {
@@ -62,10 +62,12 @@ func (m *Mina) init() {
 func main() {
 	var mina Mina
 	mina.init()
-	menasEncontradas := encontrar(mina)
-	fmt.Println("Menas encontradas: ", menasEncontradas)
-	menasMinadas := minar(menasEncontradas)
-	fmt.Println("Menas minadas: ", menasMinadas)
-	lingotes := fundir(menasMinadas)
-	fmt.Println("Lingotes: ", lingotes)
+
+	canalMenasEncontradas := make(chan Material)
+	canalMenasMinadas := make(chan Material)
+
+	go encontrar(mina, canalMenasEncontradas)
+	go minar(canalMenasEncontradas, canalMenasMinadas)
+	go fundir(canalMenasMinadas)
+	<-time.After(time.Second * 5) // ignorar por ahora
 }
