@@ -15,32 +15,42 @@ type MenasEncontradas []Material
 type MenasMinadas []Material
 type Lingotes []Material
 
-func encontrar(mina Mina) (m MenasEncontradas) {
+func encontrar1(mina Mina) (m MenasEncontradas) {
 	for _, v := range mina {
 		if v.tipo == "mena" {
-			fmt.Println("Ojeador: encontre una mena de", v.material)
+			fmt.Println("Ojeador 1: encontre una mena de", v.material)
 			m = append(m, v)
 		}
 	}
 	return
 }
 
-func minar(menas MenasEncontradas) (m MenasMinadas) {
-	for i, v := range menas {
-		fmt.Println("Minero: miné la mena de la posición", i)
-		m = append(m, v)
+func encontrar2(mina Mina) (m MenasEncontradas) {
+	for _, v := range mina {
+		if v.tipo == "mena" {
+			fmt.Println("Ojeador 2: encontre una mena de", v.material)
+			m = append(m, v)
+		}
 	}
 	return
 }
 
-func fundir(menas MenasMinadas) (m Lingotes) {
-	for _, v := range menas {
-		fmt.Println("Fundidor: fundiendo mina de ", v.material)
-		v.tipo = "lingote"
-		m = append(m, v)
-	}
-	return
-}
+// func minar(menas MenasEncontradas) (m MenasMinadas) {
+// 	for i, v := range menas {
+// 		fmt.Println("Minero: miné la mena de la posición", i)
+// 		m = append(m, v)
+// 	}
+// 	return
+// }
+
+// func fundir(menas MenasMinadas) (m Lingotes) {
+// 	for _, v := range menas {
+// 		fmt.Println("Fundidor: fundiendo mina de ", v.material)
+// 		v.tipo = "lingote"
+// 		m = append(m, v)
+// 	}
+// 	return
+// }
 
 func (m *Mina) init() {
 	initMateriales := []Material{
@@ -62,10 +72,7 @@ func (m *Mina) init() {
 func main() {
 	var mina Mina
 	mina.init()
-	menasEncontradas := encontrar(mina)
-	fmt.Println("Menas encontradas: ", menasEncontradas)
-	menasMinadas := minar(menasEncontradas)
-	fmt.Println("Menas minadas: ", menasMinadas)
-	lingotes := fundir(menasMinadas)
-	fmt.Println("Lingotes: ", lingotes)
+	go encontrar1(mina)
+	go encontrar2(mina)
+	<-time.After(time.Second * 2) // ignorar por ahora
 }
