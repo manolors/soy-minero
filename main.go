@@ -23,23 +23,23 @@ func encontrar(mina Mina, canalMenasEncontradas chan Material) {
 			canalMenasEncontradas <- material
 		}
 	}
-	return
+	close(canalMenasEncontradas)
 }
 
 func minar(canalMenasEncontradas chan Material, canalMenasMinadas chan Material) {
-	for {
-		m := <-canalMenasEncontradas
+	for m := range canalMenasEncontradas {
 		fmt.Println("Minero: minando mena de", m.material)
 		canalMenasMinadas <- m
 	}
+	close(canalMenasMinadas)
 }
 
-func fundir(canalMenasMinadas chan Material) {
-	for {
-		m := <-canalMenasMinadas
+func fundir(canalMenasMinadas chan Material, done chan bool) {
+	for m := range canalMenasMinadas {
 		fmt.Println("Fundidor: fundiendo mina de ", m.material)
 		m.tipo = "lingote"
 	}
+	done <- true
 }
 
 func (m *Mina) init() {
@@ -65,9 +65,10 @@ func main() {
 
 	canalMenasEncontradas := make(chan Material)
 	canalMenasMinadas := make(chan Material)
+	done := make(chan bool)
 
 	go encontrar(mina, canalMenasEncontradas)
 	go minar(canalMenasEncontradas, canalMenasMinadas)
-	go fundir(canalMenasMinadas)
-	<-time.After(time.Second * 5) // ignorar por ahora
+	go fundir(canalMenasMinadas, done)
+	<-done
 }
