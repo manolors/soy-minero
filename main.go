@@ -16,7 +16,7 @@ type MenasEncontradas []Material
 type MenasMinadas []Material
 type Lingotes []Material
 
-func encontrar(mina Mina, canalMenasEncontradas chan Material) {
+func encontrar(mina Mina) {
 	for _, material := range mina {
 		if material.tipo == "mena" {
 			fmt.Println("Ojeador: encontre una material de", material.material)
@@ -26,7 +26,7 @@ func encontrar(mina Mina, canalMenasEncontradas chan Material) {
 	close(canalMenasEncontradas)
 }
 
-func minar(canalMenasEncontradas chan Material, canalMenasMinadas chan Material) {
+func minar() {
 	for m := range canalMenasEncontradas {
 		fmt.Println("Minero: minando mena de", m.material)
 		canalMenasMinadas <- m
@@ -34,7 +34,7 @@ func minar(canalMenasEncontradas chan Material, canalMenasMinadas chan Material)
 	close(canalMenasMinadas)
 }
 
-func fundir(canalMenasMinadas chan Material, done chan bool) {
+func fundir() {
 	for m := range canalMenasMinadas {
 		fmt.Println("Fundidor: fundiendo mina de ", m.material)
 		m.tipo = "lingote"
@@ -59,16 +59,19 @@ func (m *Mina) init() {
 	}
 }
 
+var canalMenasEncontradas, canalMenasMinadas chan Material
+var done chan bool
+
 func main() {
 	var mina Mina
 	mina.init()
 
-	canalMenasEncontradas := make(chan Material)
-	canalMenasMinadas := make(chan Material)
-	done := make(chan bool)
+	canalMenasEncontradas = make(chan Material)
+	canalMenasMinadas = make(chan Material)
+	done = make(chan bool)
 
-	go encontrar(mina, canalMenasEncontradas)
-	go minar(canalMenasEncontradas, canalMenasMinadas)
-	go fundir(canalMenasMinadas, done)
+	go encontrar(mina)
+	go minar()
+	go fundir()
 	<-done
 }
