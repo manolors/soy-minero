@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math/rand"
+	"sync"
 	"time"
 )
 
@@ -24,6 +25,7 @@ func encontrar(mina Mina) {
 		}
 	}
 	close(canalMenasEncontradas)
+	wg.Done()
 }
 
 func minar() {
@@ -32,6 +34,7 @@ func minar() {
 		canalMenasMinadas <- m
 	}
 	close(canalMenasMinadas)
+	wg.Done()
 }
 
 func fundir() {
@@ -39,7 +42,7 @@ func fundir() {
 		fmt.Println("Fundidor: fundiendo mina de ", m.material)
 		m.tipo = "lingote"
 	}
-	done <- true
+	wg.Done()
 }
 
 func (m *Mina) init() {
@@ -60,7 +63,7 @@ func (m *Mina) init() {
 }
 
 var canalMenasEncontradas, canalMenasMinadas chan Material
-var done chan bool
+var wg sync.WaitGroup
 
 func main() {
 	var mina Mina
@@ -68,10 +71,12 @@ func main() {
 
 	canalMenasEncontradas = make(chan Material)
 	canalMenasMinadas = make(chan Material)
-	done = make(chan bool)
 
+	wg.Add(1)
 	go encontrar(mina)
+	wg.Add(1)
 	go minar()
+	wg.Add(1)
 	go fundir()
-	<-done
+	wg.Wait()
 }
